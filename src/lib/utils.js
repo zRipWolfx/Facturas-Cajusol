@@ -63,3 +63,49 @@ export function formatMoney(value, decimals = 2) {
   if (!value && value !== 0) return ''
   return parseFloat(value).toFixed(decimals)
 }
+
+export function normalizeE164Phone(input, defaultCountryCode = '51') {
+  const raw = String(input || '').trim()
+  if (!raw) return ''
+
+  const hasPlus = raw.startsWith('+')
+  let digits = raw.replace(/[^\d]/g, '')
+  if (!digits) return ''
+
+  if (digits.startsWith('00')) digits = digits.slice(2)
+
+  if (!hasPlus) {
+    if (digits.length === 9 && digits.startsWith('9') && defaultCountryCode) {
+      digits = `${defaultCountryCode}${digits}`
+    }
+  }
+
+  if (digits.length < 8 || digits.length > 15) return ''
+  return `+${digits}`
+}
+
+export function formatInternationalPhone(input, defaultCountryCode = '51') {
+  const e164 = normalizeE164Phone(input, defaultCountryCode)
+  if (!e164) return String(input || '').trim()
+
+  const digits = e164.slice(1)
+  if (digits.startsWith('51') && digits.length === 11) {
+    const rest = digits.slice(2)
+    return `+51 ${rest.slice(0, 3)} ${rest.slice(3, 6)} ${rest.slice(6)}`
+  }
+
+  if (digits.length <= 4) return e164
+
+  const cc = digits.slice(0, Math.min(3, digits.length - 4))
+  const rest = digits.slice(cc.length)
+  const grouped = rest.replace(/(\d{3})(?=\d)/g, '$1 ').trim()
+  return `+${cc} ${grouped}`
+}
+
+export function buildWhatsAppChatLink(phone, text = '') {
+  const e164 = normalizeE164Phone(phone)
+  if (!e164) return ''
+  const digits = e164.replace(/[^\d]/g, '')
+  const query = text ? `?text=${encodeURIComponent(text)}` : ''
+  return `https://wa.me/${digits}${query}`
+}

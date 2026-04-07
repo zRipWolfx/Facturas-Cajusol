@@ -1,5 +1,5 @@
 import { forwardRef } from 'react'
-import { formatDate, formatMoney, numeroALetras } from '../lib/utils'
+import { formatDate, formatInternationalPhone, formatMoney, numeroALetras } from '../lib/utils'
 
 /**
  * CotizacionPreview: renderiza la cotización tal como se verá impresa.
@@ -15,6 +15,7 @@ const CotizacionPreview = forwardRef(({ cotizacion, items, config }, ref) => {
   const subtotal = items.reduce((s, i) => s + (parseFloat(i.cantidad || 0) * parseFloat(i.precio_unitario || 0)), 0)
   const igv = subtotal * (porcentaje_igv / 100)
   const total = subtotal + igv
+  const whatsappDisplay = formatInternationalPhone(whatsapp_numero)
 
   // Determinar URLs de logos
   const tipo = config?.logo_tipo || 'archivo'
@@ -59,32 +60,6 @@ const CotizacionPreview = forwardRef(({ cotizacion, items, config }, ref) => {
                 </div>
               )}
               {config?.web && <div style={{ fontSize: 9, color: '#1a237e' }}>{config.web}</div>}
-              {/* WhatsApp de contacto */}
-              {whatsapp_numero && (
-                <div style={{
-                  fontSize: 10,
-                  marginTop: 5,
-                  fontWeight: 700,
-                  color: '#075e54',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 4,
-                }}>
-                  <span style={{
-                    display: 'inline-block',
-                    background: '#25d366',
-                    color: '#fff',
-                    borderRadius: '50%',
-                    width: 14, height: 14,
-                    fontSize: 9,
-                    lineHeight: '14px',
-                    textAlign: 'center',
-                    fontWeight: 900,
-                  }}>W</span>
-                  {whatsapp_numero}
-                </div>
-              )}
             </td>
             {/* Caja RUC + Cotización */}
             <td style={{ width: '150px', verticalAlign: 'top' }}>
@@ -213,6 +188,15 @@ const CotizacionPreview = forwardRef(({ cotizacion, items, config }, ref) => {
                       <strong>{config.banco2_nombre}</strong>{config.banco2_cci && ` CCI: ${config.banco2_cci}`}
                     </div>
                   )}
+                </div>
+              )}
+
+              {(whatsappDisplay || config?.telefono || config?.email) && (
+                <div style={{ border: '1px solid #aaa', padding: '6px 8px', marginTop: 6 }}>
+                  <div style={{ fontWeight: 700, marginBottom: 4, fontSize: 10 }}>CONTACTOS</div>
+                  {whatsappDisplay && <div style={{ fontSize: 10 }}>WhatsApp: {whatsappDisplay}</div>}
+                  {config?.telefono && <div style={{ fontSize: 10 }}>Teléfono: {config.telefono}</div>}
+                  {config?.email && <div style={{ fontSize: 10 }}>Email: {config.email}</div>}
                 </div>
               )}
             </td>

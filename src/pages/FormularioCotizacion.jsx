@@ -7,11 +7,27 @@ import {
 } from 'lucide-react'
 import CotizacionPreview from '../components/CotizacionPreview'
 import { saveCotizacion, getCotizacion, getSiguienteNumero, getConfiguracion, getWhatsappNumeros } from '../lib/api'
-import { formatMoney } from '../lib/utils'
+import { buildWhatsAppChatLink, formatInternationalPhone, formatMoney, normalizeE164Phone } from '../lib/utils'
 
 const ITEM_VACIO = { codigo: '', cantidad: '', unidad_medida: 'NIU', descripcion: '', precio_unitario: '' }
 
 const UNIDADES = ['NIU', 'KGM', 'MTR', 'LTR', 'GLN', 'UND', 'PZA', 'JGO', 'CJA', 'PAR']
+
+function WhatsAppIcon({ size = 18 }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 32 32"
+      aria-hidden="true"
+      focusable="false"
+      style={{ display: 'block' }}
+    >
+      <path d="M16.04 2C8.29 2 2 8.29 2 16.04c0 2.82.74 5.57 2.14 7.99L2 30l6.13-2.01a14.01 14.01 0 0 0 7.91 2.26h.01C23.8 30.25 30 23.96 30 16.21 30 8.46 23.79 2 16.04 2zm0 25.88h-.01c-2.38 0-4.7-.64-6.73-1.86l-.48-.29-3.64 1.19 1.19-3.54-.31-.52a11.67 11.67 0 0 1-1.8-6.24C4.26 10.09 9.97 4.38 17 4.38c6.93 0 12.62 5.63 12.62 12.55 0 6.92-5.69 12.55-12.58 12.55z" fill="currentColor" />
+      <path d="M23.31 18.92c-.33-.17-1.96-.97-2.26-1.08-.3-.11-.52-.17-.74.17-.22.33-.85 1.08-1.04 1.3-.19.22-.37.25-.7.08-.33-.17-1.39-.51-2.65-1.62-.98-.88-1.64-1.97-1.83-2.3-.19-.33-.02-.51.14-.68.15-.15.33-.37.49-.56.16-.19.22-.33.33-.55.11-.22.05-.41-.03-.58-.08-.17-.74-1.78-1.02-2.45-.27-.64-.54-.55-.74-.56h-.63c-.22 0-.58.08-.88.41-.3.33-1.16 1.13-1.16 2.76 0 1.63 1.19 3.21 1.36 3.43.17.22 2.34 3.57 5.67 5 .79.34 1.4.54 1.88.69.79.25 1.51.22 2.08.13.63-.09 1.96-.8 2.24-1.57.28-.77.28-1.43.19-1.57-.08-.14-.3-.22-.63-.39z" fill="currentColor" />
+    </svg>
+  )
+}
 
 export default function FormularioCotizacion() {
   const { id } = useParams()
@@ -85,6 +101,12 @@ export default function FormularioCotizacion() {
   const subtotal = items.reduce((s, i) => s + (parseFloat(i.cantidad || 0) * parseFloat(i.precio_unitario || 0)), 0)
   const igv = subtotal * ((cot.porcentaje_igv || 18) / 100)
   const total = subtotal + igv
+  const whatsappE164 = normalizeE164Phone(cot.whatsapp_numero)
+  const whatsappDisplay = formatInternationalPhone(cot.whatsapp_numero)
+  const whatsappLink = buildWhatsAppChatLink(
+    cot.whatsapp_numero,
+    `Hola, te escribo por la cotización ${cot.numero || ''}`.trim()
+  )
 
   // Handlers items
   function updateItem(idx, field, value) {
@@ -173,7 +195,7 @@ export default function FormularioCotizacion() {
       {error && <div className="alert alert-error"><AlertCircle size={16} />{error}</div>}
       {success && <div className="alert alert-success">{success}</div>}
 
-      <div style={{ display: 'grid', gridTemplateColumns: showPreview ? '1fr 1fr' : '1fr', gap: 20 }}>
+      <div className={`cotizacion-split${showPreview ? ' preview' : ''}`}>
         {/* ── FORMULARIO ── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
@@ -281,6 +303,64 @@ export default function FormularioCotizacion() {
                 ))}
               </div>
             )}
+          </div>
+
+          <div className="card">
+            <div className="card-header">
+              <div className="card-title">📞 Contactos</div>
+              <span style={{ fontSize: 11, color: 'var(--text-dark)' }}>Acceso rápido</span>
+            </div>
+            <div className="contactos-grid">
+              <a
+                className={`contact-link contact-link-whatsapp${whatsappLink ? '' : ' disabled'}`}
+                href={whatsappLink || undefined}
+                target={whatsappLink ? '_blank' : undefined}
+                rel={whatsappLink ? 'noreferrer' : undefined}
+                aria-label={whatsappLink ? `Abrir chat de WhatsApp con ${whatsappDisplay}` : 'Selecciona un número de WhatsApp para habilitar el enlace'}
+                tabIndex={whatsappLink ? 0 : -1}
+              >
+                <span className="contact-link-icon" aria-hidden="true">
+                  <WhatsAppIcon size={18} />
+                </span>
+                <div style={{ minWidth: 0 }}>
+                  <div className="contact-link-title">WhatsApp</div>
+                  <div className="contact-link-value">{whatsappDisplay || 'Selecciona un número en “WhatsApp de contacto”'}</div>
+                </div>
+                <span className="contact-link-meta" aria-hidden="true">
+                  {whatsappE164 ? 'Abrir' : '—'}
+                </span>
+              </a>
+
+              {(config?.telefono || config?.email) && (
+                <div className="contact-block">
+                  {config?.telefono && (
+                    <a
+                      className={`contact-link${normalizeE164Phone(config.telefono) ? '' : ' disabled'}`}
+                      href={normalizeE164Phone(config.telefono) ? `tel:${normalizeE164Phone(config.telefono)}` : undefined}
+                      aria-label={`Llamar a ${config.telefono}`}
+                      tabIndex={normalizeE164Phone(config.telefono) ? 0 : -1}
+                    >
+                      <span className="contact-link-icon" aria-hidden="true">📞</span>
+                      <div style={{ minWidth: 0 }}>
+                        <div className="contact-link-title">Teléfono</div>
+                        <div className="contact-link-value">{config.telefono}</div>
+                      </div>
+                      <span className="contact-link-meta" aria-hidden="true">Llamar</span>
+                    </a>
+                  )}
+                  {config?.email && (
+                    <a className="contact-link" href={`mailto:${config.email}`} aria-label={`Enviar email a ${config.email}`}>
+                      <span className="contact-link-icon" aria-hidden="true">✉️</span>
+                      <div style={{ minWidth: 0 }}>
+                        <div className="contact-link-title">Email</div>
+                        <div className="contact-link-value">{config.email}</div>
+                      </div>
+                      <span className="contact-link-meta" aria-hidden="true">Escribir</span>
+                    </a>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Sección: Condiciones */}
