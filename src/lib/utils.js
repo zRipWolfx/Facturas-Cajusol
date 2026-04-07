@@ -109,3 +109,29 @@ export function buildWhatsAppChatLink(phone, text = '') {
   const query = text ? `?text=${encodeURIComponent(text)}` : ''
   return `https://wa.me/${digits}${query}`
 }
+
+function normalizeBackendBaseUrl() {
+  const raw = String(import.meta.env.VITE_API_URL || '/api').trim()
+  if (!raw) return ''
+  if (raw.startsWith('/')) return ''
+  const withProtocol = raw.startsWith('http://') || raw.startsWith('https://') ? raw : `https://${raw}`
+  const url = new URL(withProtocol)
+  const pathname = url.pathname.replace(/\/$/, '')
+  if (pathname && pathname !== '/' && pathname.endsWith('/api')) {
+    url.pathname = pathname.slice(0, -4) || '/'
+  } else if (!pathname || pathname === '/') {
+    url.pathname = '/'
+  }
+  url.search = ''
+  url.hash = ''
+  const normalizedPath = url.pathname === '/' ? '' : url.pathname.replace(/\/$/, '')
+  return `${url.origin}${normalizedPath}`
+}
+
+export function resolveUploadsUrl(value) {
+  const url = String(value || '').trim()
+  if (!url) return value
+  if (!url.startsWith('/uploads/')) return value
+  const base = normalizeBackendBaseUrl()
+  return base ? `${base}${url}` : url
+}

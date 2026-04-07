@@ -484,6 +484,6 @@ app.listen(port, () => {
   const mode = (internalRailwayUrl && !runningInsideRailway && databasePublicUrl)
     ? 'Railway público (local)'
     : (internalRailwayUrl ? 'Railway interno' : 'Railway/Postgres')
-  console.log(`API lista en http://localhost:${port}`)
+  console.log(`API lista en :${port}`)
   console.log(`Base de datos configurada: ${mode}`)
 })

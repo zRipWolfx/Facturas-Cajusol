@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Upload, Database, Image, RefreshCw, Link } from 'lucide-react'
 import { getLogosDisponibles, uploadLogo } from '../lib/api'
+import { resolveUploadsUrl } from '../lib/utils'
 
 export default function LogoSelector({ tipoLogo, onChangeTipo, logoIconoUrl, logoTextoUrl, onChangeLogoIcono, onChangeLogoTexto }) {
   const [logosDB, setLogosDB] = useState([])
@@ -170,7 +171,7 @@ export default function LogoSelector({ tipoLogo, onChangeTipo, logoIconoUrl, log
                       gap: 4,
                     }}
                   >
-                    <img src={logo.url_publica} alt={logo.nombre} style={{ width: '100%', height: 40, objectFit: 'contain' }} />
+                    <img src={resolveUploadsUrl(logo.url_publica)} alt={logo.nombre} style={{ width: '100%', height: 40, objectFit: 'contain' }} />
                     <span style={{ fontSize: 10, color: 'var(--text-muted)', wordBreak: 'break-all' }}>{logo.tipo}</span>
                   </button>
                 </div>
@@ -197,8 +198,8 @@ export default function LogoSelector({ tipoLogo, onChangeTipo, logoIconoUrl, log
 
       {(logoIconoUrl || logoTextoUrl) && (
         <div style={{ marginTop: 12, padding: 12, background: 'rgba(255,255,255,0.9)', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
-          {logoIconoUrl && <img src={logoIconoUrl} alt="Logo icono" style={{ height: 48, objectFit: 'contain' }} />}
-          {logoTextoUrl && <img src={logoTextoUrl} alt="Logo texto" style={{ height: 40, objectFit: 'contain' }} />}
+          {logoIconoUrl && <img src={resolveUploadsUrl(logoIconoUrl)} alt="Logo icono" style={{ height: 48, objectFit: 'contain' }} />}
+          {logoTextoUrl && <img src={resolveUploadsUrl(logoTextoUrl)} alt="Logo texto" style={{ height: 40, objectFit: 'contain' }} />}
         </div>
       )}
     </div>

@@ -1,5 +1,5 @@
 import { forwardRef } from 'react'
-import { formatDate, formatInternationalPhone, formatMoney, numeroALetras } from '../lib/utils'
+import { formatDate, formatInternationalPhone, formatMoney, numeroALetras, resolveUploadsUrl } from '../lib/utils'
 
 /**
  * CotizacionPreview: renderiza la cotización tal como se verá impresa.
@@ -19,8 +19,8 @@ const CotizacionPreview = forwardRef(({ cotizacion, items, config }, ref) => {
 
   // Determinar URLs de logos
   const tipo = config?.logo_tipo || 'archivo'
-  const iconoUrl = tipo === 'archivo' ? '/logo-icon.png' : (config?.logo_icono_url || '/logo-icon.png')
-  const textoUrl = tipo === 'archivo' ? '/logo-text.png' : (config?.logo_texto_url || '/logo-text.png')
+  const iconoUrl = tipo === 'archivo' ? '/logo-icon.png' : resolveUploadsUrl(config?.logo_icono_url || '/logo-icon.png')
+  const textoUrl = tipo === 'archivo' ? '/logo-text.png' : resolveUploadsUrl(config?.logo_texto_url || '/logo-text.png')
 
   return (
     <div ref={ref} style={{

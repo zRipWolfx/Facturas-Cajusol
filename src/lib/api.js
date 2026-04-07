@@ -2,8 +2,11 @@ function normalizeApiBase() {
   const raw = String(import.meta.env.VITE_API_URL || '/api').trim()
   if (!raw) return '/api'
   if (raw.startsWith('/')) return raw.replace(/\/$/, '')
-  if (raw.startsWith('http://') || raw.startsWith('https://')) return raw.replace(/\/$/, '')
-  return `https://${raw}`.replace(/\/$/, '')
+  const withProtocol = raw.startsWith('http://') || raw.startsWith('https://') ? raw : `https://${raw}`
+  const url = new URL(withProtocol)
+  const path = url.pathname.replace(/\/$/, '')
+  if (!path || path === '/') url.pathname = '/api'
+  return url.toString().replace(/\/$/, '')
 }
 
 const API_BASE = normalizeApiBase()
