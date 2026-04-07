@@ -17,14 +17,25 @@ const __dirname = path.dirname(__filename)
 const rootDir = path.resolve(__dirname, '..')
 const distDir = path.join(rootDir, 'dist')
 const uploadsDir = path.join(rootDir, 'uploads')
-const databaseUrl = process.env.DATABASE_URL
+function buildDatabaseUrlFromPgEnv() {
+  const user = process.env.PGUSER
+  const password = process.env.PGPASSWORD
+  const host = process.env.PGHOST
+  const portValue = process.env.PGPORT
+  const database = process.env.PGDATABASE
+  if (!user || !password || !host || !database) return ''
+  const port = Number(portValue || 5432)
+  return `postgresql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}/${database}`
+}
+
+const databaseUrl = process.env.DATABASE_URL || buildDatabaseUrlFromPgEnv()
 const databasePublicUrl = process.env.DATABASE_PUBLIC_URL
 const port = Number(process.env.PORT || 3001)
-const internalRailwayUrl = databaseUrl?.includes('.railway.internal')
 const runningInsideRailway = Boolean(process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_ID)
+const internalRailwayUrl = databaseUrl?.includes('.railway.internal')
 
 if (!databaseUrl) {
-  throw new Error('Falta DATABASE_URL en el archivo .env')
+  throw new Error('Falta DATABASE_URL (o variables PGHOST/PGUSER/PGPASSWORD/PGDATABASE) en el entorno.')
 }
 
 const connectionString = internalRailwayUrl && !runningInsideRailway
