@@ -1,4 +1,12 @@
-const API_BASE = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '')
+function normalizeApiBase() {
+  const raw = String(import.meta.env.VITE_API_URL || '/api').trim()
+  if (!raw) return '/api'
+  if (raw.startsWith('/')) return raw.replace(/\/$/, '')
+  if (raw.startsWith('http://') || raw.startsWith('https://')) return raw.replace(/\/$/, '')
+  return `https://${raw}`.replace(/\/$/, '')
+}
+
+const API_BASE = normalizeApiBase()
 
 async function parseResponse(response) {
   const isJson = response.headers.get('content-type')?.includes('application/json')
@@ -12,15 +20,19 @@ async function parseResponse(response) {
 }
 
 async function apiRequest(path, options = {}) {
-  const response = await fetch(`${API_BASE}${path}`, {
-    headers: {
-      ...(options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
-      ...(options.headers || {}),
-    },
-    ...options,
-  })
+  try {
+    const response = await fetch(`${API_BASE}${path}`, {
+      headers: {
+        ...(options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
+        ...(options.headers || {}),
+      },
+      ...options,
+    })
 
-  return parseResponse(response)
+    return parseResponse(response)
+  } catch {
+    throw new Error('No se pudo conectar con el servidor. Verifica que la API esté en ejecución.')
+  }
 }
 
 export function getConfiguracion() {

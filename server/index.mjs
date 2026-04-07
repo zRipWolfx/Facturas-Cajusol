@@ -18,6 +18,7 @@ const rootDir = path.resolve(__dirname, '..')
 const distDir = path.join(rootDir, 'dist')
 const uploadsDir = path.join(rootDir, 'uploads')
 const databaseUrl = process.env.DATABASE_URL
+const databasePublicUrl = process.env.DATABASE_PUBLIC_URL
 const port = Number(process.env.PORT || 3001)
 const internalRailwayUrl = databaseUrl?.includes('.railway.internal')
 const runningInsideRailway = Boolean(process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_ID)
@@ -26,12 +27,16 @@ if (!databaseUrl) {
   throw new Error('Falta DATABASE_URL en el archivo .env')
 }
 
-if (internalRailwayUrl && !runningInsideRailway) {
+const connectionString = internalRailwayUrl && !runningInsideRailway
+  ? (databasePublicUrl || databaseUrl)
+  : databaseUrl
+
+if (internalRailwayUrl && !runningInsideRailway && !databasePublicUrl) {
   throw new Error('La DATABASE_URL actual usa un host interno de Railway y no funciona fuera de Railway. Usa la conexión pública de Postgres para correr este proyecto localmente.')
 }
 
 const pool = new Pool({
-  connectionString: databaseUrl,
+  connectionString,
   ssl: process.env.PGSSLMODE === 'disable' ? false : { rejectUnauthorized: false },
 })
 
@@ -459,7 +464,7 @@ app.delete('/api/cotizaciones/:id', async (req, res) => {
 if (existsSync(distDir)) {
   app.use(express.static(distDir))
 
-  app.get('*', (req, res, next) => {
+  app.get(/.*/, (req, res, next) => {
     if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
       next()
       return
@@ -476,7 +481,9 @@ app.use((error, _req, res, _next) => {
 await initDatabase()
 
 app.listen(port, () => {
-  const mode = internalRailwayUrl ? 'Railway interno' : 'Railway/Postgres'
+  const mode = (internalRailwayUrl && !runningInsideRailway && databasePublicUrl)
+    ? 'Railway público (local)'
+    : (internalRailwayUrl ? 'Railway interno' : 'Railway/Postgres')
   console.log(`API lista en http://localhost:${port}`)
   console.log(`Base de datos configurada: ${mode}`)
 })
